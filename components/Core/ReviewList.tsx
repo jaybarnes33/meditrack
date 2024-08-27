@@ -25,7 +25,7 @@ const ReviewList = () => {
   );
 
   return (
-    <View className="mt-4 ">
+    <View className="mt-4 flex-1 ">
       <Text className="font-semibold text-lg ">Daily Review</Text>
 
       <FlatList

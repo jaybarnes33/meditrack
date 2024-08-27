@@ -29,7 +29,7 @@ const AddDrug = () => {
         <View>
           <Text>Dosage & Frequency</Text>
           <View className="flex-row justify-between">
-            <View className="flex-row w-[44vw] h-14 space-x-2 bg-neutral px-5 mt-2 rounded-2xl items-center">
+            <View className="flex-row w-[43vw] h-14 space-x-1 bg-neutral px-3 mt-2 rounded-2xl items-center">
               <Image source={require("@/assets/images/drugs.png")} />
 
               <TextInput
@@ -37,7 +37,7 @@ const AddDrug = () => {
                 placeholder="Enter drug name"
               />
             </View>
-            <View className="flex-row w-[44vw] h-14 space-x-2 bg-neutral px-5 mt-2 rounded-2xl items-center">
+            <View className="flex-row w-[43vw] h-14 space-x-2 bg-neutral px-5 mt-2 rounded-2xl items-center">
               <AntDesign name="clockcircle" color="gray" />
 
               <TextInput className=" w-full p-2 " placeholder="Frequency" />
@@ -64,7 +64,7 @@ const AddDrug = () => {
         </View>
       </View>
       <TouchableOpacity
-        className="bg-green-500 absolute bottom-0 w-full  h-14 items-center justify-center rounded-2xl"
+        className="bg-green-500 absolute bottom-10 w-full  h-14 items-center justify-center rounded-2xl"
         onPress={() => alert("Drug added successfully")}
       >
         <Text className="text-white font-semibold">Done</Text>
