@@ -18,7 +18,7 @@ const index = () => {
         <Text className="text-2xl font-light">Raymond</Text>
       </View>
 
-      <View className="p-5 flex-row rounded-3xl bg-accent relative h-[20vh]">
+      <View className="p-5 flex-row rounded-3xl bg-accent relative h-[22vh]">
         <View className="space-y-3">
           <Text className="font-bold text-xl w-28">Your plan for today</Text>
           <Text>2 of 4 completed</Text>
