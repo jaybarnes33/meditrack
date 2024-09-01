@@ -69,7 +69,6 @@ async function registerForPushNotificationsAsync() {
           projectId,
         })
       ).data;
-      console.log(token);
     } catch (e) {
       token = `${e}`;
     }
@@ -192,7 +191,7 @@ export default function App() {
           minutes: reminder.minutes,
         });
       } catch (error) {
-        console.log("Error scheduling notification", error);
+        alert("Error scheduling notification for " + formData.name);
       }
     });
     setFormData({
@@ -255,9 +254,8 @@ export default function App() {
                     mode="time"
                     key={index}
                     display="default"
-                    onChange={(event, selectedDate) => {
+                    onChange={(_, selectedDate) => {
                       if (selectedDate) {
-                        console.log(selectedDate);
                         const currentDate = selectedDate;
                         setFormData((prev) => ({
                           ...prev,
