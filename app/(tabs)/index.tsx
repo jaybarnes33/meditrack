@@ -9,10 +9,6 @@ const index = () => {
     <SafeAreaView className="px-5  space-y-4 bg-white flex-1">
       {/* Intro */}
 
-      <View className="flex-row space-x-2 items-center px-2 bg-neutral rounded-xl mb-3">
-        <Feather name="search" size={20} color={"grey"} />
-        <TextInput placeholder="Search" className="h-12" />
-      </View>
       <View>
         <Text className="font-bold text-xl">Hello,</Text>
         <Text className="text-2xl font-light">Raymond</Text>

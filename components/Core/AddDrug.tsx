@@ -7,13 +7,15 @@ import {
   TextInput,
   Image,
 } from "react-native";
+
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
-import * as SecureStore from "expo-secure-store";
+
 import { useNavigation } from "expo-router";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { AntDesign, Feather, Octicons } from "@expo/vector-icons";
+import { useDrugContext } from "@/store/drugStore";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -89,6 +91,7 @@ export default function App() {
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
 
+  const { addDrug } = useDrugContext();
   useEffect(() => {
     registerForPushNotificationsAsync().then(
       (token) => token && setExpoPushToken(token)
@@ -125,21 +128,34 @@ export default function App() {
   const [formData, setFormData] = useState({
     name: "",
     dosage: "",
-    reminders: [{ time: new Date() }],
+    reminders: [
+      {
+        hours: new Date().getHours(),
+        minutes: new Date().getMinutes(),
+        taken: false,
+      },
+    ],
   });
 
-  async function scheduleDailyNotification(time: Date) {
+  async function scheduleDailyNotification({
+    hours,
+    minutes,
+  }: {
+    hours: number;
+    minutes: number;
+  }) {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Meditrack",
         body: `It's time 🕒 to take your medication. ${formData.dosage} of ${formData.name} `,
         priority: Notifications.AndroidNotificationPriority.MAX,
+        sound: true,
         vibrate: [0, 250, 250, 250],
       },
 
       trigger: {
-        hour: time.getHours(),
-        minute: time.getMinutes(),
+        hour: hours,
+        minute: minutes,
         repeats: true,
       },
     });
@@ -151,7 +167,14 @@ export default function App() {
   const addNewReminder = () => {
     setFormData((prev) => ({
       ...prev,
-      reminders: [...prev.reminders, { time: new Date() }],
+      reminders: [
+        ...prev.reminders,
+        {
+          hours: new Date().getHours(),
+          minutes: new Date().getMinutes(),
+          taken: false,
+        },
+      ],
     }));
   };
 
@@ -160,15 +183,14 @@ export default function App() {
       alert("Please fill all fields");
       return;
     }
-    const drugs = (await SecureStore.getItemAsync("drugs")) || "[]";
-    await SecureStore.setItemAsync(
-      "drugs",
-      JSON.stringify([...JSON.parse(drugs), formData])
-    );
+    await addDrug(formData);
     // Schedule notifications for each reminder
     formData.reminders.forEach(async (reminder) => {
       try {
-        await scheduleDailyNotification(reminder.time);
+        await scheduleDailyNotification({
+          hours: reminder.hours,
+          minutes: reminder.minutes,
+        });
       } catch (error) {
         console.log("Error scheduling notification", error);
       }
@@ -229,27 +251,38 @@ export default function App() {
               >
                 {show && (
                   <RNDateTimePicker
-                    value={reminder.time}
+                    value={new Date()}
                     mode="time"
+                    key={index}
                     display="default"
                     onChange={(event, selectedDate) => {
-                      const currentDate = selectedDate || reminder.time;
-                      setFormData((prev) => ({
-                        ...prev,
-                        reminders: prev.reminders.map((r, i) =>
-                          i === index ? { ...r, time: currentDate } : r
-                        ),
-                      }));
+                      if (selectedDate) {
+                        console.log(selectedDate);
+                        const currentDate = selectedDate;
+                        setFormData((prev) => ({
+                          ...prev,
+                          reminders: prev.reminders.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  hours: currentDate.getHours(),
+                                  minutes: currentDate.getMinutes(),
+                                }
+                              : r
+                          ),
+                        }));
+                      }
                       setShow(false);
                     }}
                   />
                 )}
                 <TouchableOpacity onPress={() => setShow(true)}>
                   <Text className="text-base">
-                    {reminder.time.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {`${reminder.hours
+                      .toString()
+                      .padStart(2, "0")}:${reminder.minutes
+                      .toString()
+                      .padStart(2, "0")}`}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
