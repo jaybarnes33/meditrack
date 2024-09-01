@@ -39,12 +39,12 @@ const DrugDetails = () => {
 
   const handleTaken = async (drugIndex: number, reminderIndex: number) => {
     const nearestReminder = getNearestReminder(drug) ?? {
-      hours: drug.reminders[0].hours,
-      minutes: drug.reminders[0].minutes,
+      hours: drug?.reminders[0].hours,
+      minutes: drug?.reminders[0].minutes,
     };
     await markAsTaken(drugIndex, reminderIndex);
     alert(
-      `You have marked ${drug.name} as taken, next reminder will be at ${nearestReminder.hours}:${nearestReminder.minutes} `
+      `You have marked ${drug?.name} as taken, next reminder will be at ${nearestReminder.hours}:${nearestReminder.minutes} `
     );
   };
 
@@ -68,11 +68,11 @@ const DrugDetails = () => {
       >
         <AntDesign name="arrowleft" size={24} color="grey" />
       </TouchableOpacity>
-      <Text className="text-xl my-3 font-bold">{drug.name}</Text>
-      <Text>{drug.dosage}</Text>
+      <Text className="text-xl my-3 font-bold">{drug?.name}</Text>
+      <Text>{drug?.dosage}</Text>
       <View className="bg-gray-50 my-4 p-3">
         <Text>Times</Text>
-        {drug.reminders.map((reminder, drugIndex) => (
+        {drug?.reminders.map((reminder, drugIndex) => (
           <View
             key={drugIndex}
             className="flex-row space-x-5 my-3 items-center"
@@ -84,7 +84,7 @@ const DrugDetails = () => {
             </Text>
             <View className="flex-row space-x-1 flex-1">
               <Text>Take</Text>
-              <Text className="text-neutral-400 font-bold">{drug.dosage}</Text>
+              <Text className="text-neutral-400 font-bold">{drug?.dosage}</Text>
             </View>
             <View>
               {isWithinAnHour(reminder) ? (
