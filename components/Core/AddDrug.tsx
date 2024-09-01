@@ -1,11 +1,186 @@
-import { View, Text, TouchableOpacity, TextInput, Image } from "react-native";
-import React from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Text,
+  View,
+  Platform,
+  TouchableOpacity,
+  TextInput,
+  Image,
+} from "react-native";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "expo-router";
-import { AntDesign, Feather, Octicons } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { AntDesign, Feather, Octicons } from "@expo/vector-icons";
 
-const AddDrug = () => {
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+async function registerForPushNotificationsAsync() {
+  let token;
+
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== "granted") {
+      alert("Failed to get push token for push notification!");
+      return;
+    }
+    try {
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ??
+        Constants?.easConfig?.projectId;
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
+      token = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId,
+        })
+      ).data;
+      console.log(token);
+    } catch (e) {
+      token = `${e}`;
+    }
+  } else {
+    alert("Must use physical device for Push Notifications");
+  }
+
+  return token;
+}
+
+export default function App() {
+  const [expoPushToken, setExpoPushToken] = useState("");
+  const [channels, setChannels] = useState<Notifications.NotificationChannel[]>(
+    []
+  );
+  const [notification, setNotification] = useState<
+    Notifications.Notification | undefined
+  >(undefined);
+  const notificationListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<Notifications.Subscription>();
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(
+      (token) => token && setExpoPushToken(token)
+    );
+
+    if (Platform.OS === "android") {
+      Notifications.getNotificationChannelsAsync().then((value) =>
+        setChannels(value ?? [])
+      );
+    }
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        setNotification(notification);
+      });
+
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log(response);
+      });
+
+    return () => {
+      notificationListener.current &&
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
+      responseListener.current &&
+        Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
+
   const { goBack } = useNavigation();
+
+  const [show, setShow] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    dosage: "",
+    reminders: [{ time: new Date() }],
+  });
+
+  async function scheduleDailyNotification(time: Date) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Meditrack",
+        body: `It's time 🕒 to take your medication. ${formData.dosage} of ${formData.name} `,
+        priority: Notifications.AndroidNotificationPriority.MAX,
+        vibrate: [0, 250, 250, 250],
+      },
+
+      trigger: {
+        hour: time.getHours(),
+        minute: time.getMinutes(),
+        repeats: true,
+      },
+    });
+  }
+  const handleChange = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const addNewReminder = () => {
+    setFormData((prev) => ({
+      ...prev,
+      reminders: [...prev.reminders, { time: new Date() }],
+    }));
+  };
+
+  const saveDrug = async () => {
+    if (!formData.name || !formData.dosage || !formData.reminders.length) {
+      alert("Please fill all fields");
+      return;
+    }
+    const drugs = (await SecureStore.getItemAsync("drugs")) || "[]";
+    await SecureStore.setItemAsync(
+      "drugs",
+      JSON.stringify([...JSON.parse(drugs), formData])
+    );
+    // Schedule notifications for each reminder
+    formData.reminders.forEach(async (reminder) => {
+      try {
+        await scheduleDailyNotification(reminder.time);
+      } catch (error) {
+        console.log("Error scheduling notification", error);
+      }
+    });
+    setFormData({
+      name: "",
+      dosage: "",
+      reminders: [],
+    });
+    alert("Drug added successfully");
+  };
+
   return (
     <View className="space-y-6 relative flex-1">
       <TouchableOpacity
@@ -23,54 +198,87 @@ const AddDrug = () => {
           <View className="flex-row h-14 space-x-2 bg-neutral px-5 mt-2 rounded-2xl items-center">
             <Image source={require("@/assets/images/drugs.png")} />
 
-            <TextInput className=" w-full p-2 " placeholder="Enter drug name" />
+            <TextInput
+              className=" w-full p-2 "
+              placeholder="Enter drug name"
+              value={formData.name}
+              onChangeText={(text) => handleChange("name", text)}
+            />
           </View>
         </View>
         <View>
           <Text>Dosage & Frequency</Text>
           <View className="flex-row justify-between">
-            <View className="flex-row w-[43vw] h-14 space-x-1 bg-neutral px-3 mt-2 rounded-2xl items-center">
-              <Image source={require("@/assets/images/drugs.png")} />
-
+            <View className="flex-row  h-14 space-x-1 bg-neutral px-3 mt-2 rounded-2xl items-center">
               <TextInput
                 className=" w-full p-2 "
-                placeholder="Enter drug name"
+                placeholder="Enter dosage"
+                value={formData.dosage}
+                onChangeText={(text) => handleChange("dosage", text)}
               />
-            </View>
-            <View className="flex-row w-[43vw] h-14 space-x-2 bg-neutral px-5 mt-2 rounded-2xl items-center">
-              <AntDesign name="clockcircle" color="gray" />
-
-              <TextInput className=" w-full p-2 " placeholder="Frequency" />
             </View>
           </View>
         </View>
         <View>
           <Text>Reminders</Text>
           <View>
-            <View className="flex-row h-14 justify-between space-x-2  px-5 mt-2 rounded-2xl items-center">
-              <Octicons name="bell-fill" size={20} color={"grey"} />
-
-              <RNDateTimePicker
-                display="inline"
-                mode="time"
-                value={new Date()}
-              />
-
-              <TouchableOpacity className="  h-10 w-10 bg-green-50 items-center rounded-xl justify-center ">
-                <Feather name="plus" size={14} color="green" />
-              </TouchableOpacity>
-            </View>
+            {formData.reminders.map((reminder, index) => (
+              <View
+                key={index}
+                className="flex-row justify-between my-3 items-center"
+              >
+                {show && (
+                  <RNDateTimePicker
+                    value={reminder.time}
+                    mode="time"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      const currentDate = selectedDate || reminder.time;
+                      setFormData((prev) => ({
+                        ...prev,
+                        reminders: prev.reminders.map((r, i) =>
+                          i === index ? { ...r, time: currentDate } : r
+                        ),
+                      }));
+                      setShow(false);
+                    }}
+                  />
+                )}
+                <TouchableOpacity onPress={() => setShow(true)}>
+                  <Text className="text-base">
+                    {reminder.time.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      reminders: prev.reminders.filter((_, i) => i !== index),
+                    }))
+                  }
+                >
+                  <Octicons name="trash" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity
+              onPress={addNewReminder}
+              className="my-4 h-10 w-10 bg-green-50 items-center rounded-xl justify-center"
+            >
+              <Feather name="plus" size={14} color="green" />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
       <TouchableOpacity
         className="bg-green-500 absolute bottom-10 w-full  h-14 items-center justify-center rounded-2xl"
-        onPress={() => alert("Drug added successfully")}
+        onPress={saveDrug}
       >
         <Text className="text-white font-semibold">Done</Text>
       </TouchableOpacity>
     </View>
   );
-};
-
-export default AddDrug;
+}
