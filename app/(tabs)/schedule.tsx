@@ -5,6 +5,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { Drug, useDrugContext } from "@/store/drugStore";
 import { useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AddButton from "@/components/Core/AddButton";
 const ReviewList = () => {
   const navigation = useNavigation();
   const { drugs, isReminderTaken } = useDrugContext();
@@ -13,7 +14,10 @@ const ReviewList = () => {
       key={index}
       className="flex-row space-x-5 items-center p-3 px-8  bg-neutral rounded-3xl "
     >
-      <Image source={require("@/assets/images/drugs.png")} />
+      <Image
+        className="w-7 h-7"
+        source={require("@/assets/images/drugs.png")}
+      />
       <View className="flex-1">
         <Text className="text-base">{item?.name}</Text>
         <View className="flex-row items-center space-x-2">
@@ -49,6 +53,7 @@ const ReviewList = () => {
         renderItem={renderItem}
         keyExtractor={(item, index) => index.toString()}
       />
+      <AddButton />
     </SafeAreaView>
   );
 };

@@ -50,7 +50,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen name="schedule" />
-      <Tabs.Screen name="chat" />
+
       <Tabs.Screen name="profile" />
     </Tabs>
   );

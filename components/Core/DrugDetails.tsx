@@ -20,7 +20,9 @@ const DrugDetails = () => {
   const navigation = useNavigation();
   const handleDelete = async () => {
     await deleteDrug(index);
-    navigation.navigate("((tabs))");
+    alert("Drug deleted successfully");
+    //@ts-ignore
+    navigation.navigate("(tabs)");
   };
   const drug = drugs[index];
   const isWithinAnHour = (reminder: (typeof drug.reminders)[number]) => {
@@ -36,7 +38,10 @@ const DrugDetails = () => {
   };
 
   const handleTaken = async (drugIndex: number, reminderIndex: number) => {
-    const nearestReminder = getNearestReminder(drug);
+    const nearestReminder = getNearestReminder(drug) ?? {
+      hours: drug.reminders[0].hours,
+      minutes: drug.reminders[0].minutes,
+    };
     await markAsTaken(drugIndex, reminderIndex);
     alert(
       `You have marked ${drug.name} as taken, next reminder will be at ${nearestReminder.hours}:${nearestReminder.minutes} `
@@ -55,10 +60,6 @@ const DrugDetails = () => {
     return timeDifference > 30; // More than an hour away
   };
 
-  //   Sort reminders and return latest first
-  const sortedReminders = drug.reminders.sort(
-    (a, b) => a.hours * 60 + a.minutes - (b.hours * 60 + b.minutes)
-  );
   return (
     <SafeAreaView className="flex-1 px-4 bg-white">
       <TouchableOpacity
@@ -71,7 +72,7 @@ const DrugDetails = () => {
       <Text>{drug.dosage}</Text>
       <View className="bg-gray-50 my-4 p-3">
         <Text>Times</Text>
-        {sortedReminders.map((reminder, drugIndex) => (
+        {drug.reminders.map((reminder, drugIndex) => (
           <View
             key={drugIndex}
             className="flex-row space-x-5 my-3 items-center"
@@ -115,7 +116,7 @@ const DrugDetails = () => {
 
       <TouchableOpacity
         className="bg-red-500 rounded-xl my-2 items-center p-3"
-        onPress={() => deleteDrug(index)}
+        onPress={async () => await handleDelete()}
       >
         <Text className="text-gray-50 font-semibold text-base">
           Delete drug

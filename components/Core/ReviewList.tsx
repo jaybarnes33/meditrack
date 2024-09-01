@@ -40,9 +40,24 @@ const ReviewList = () => {
   );
 
   return (
-    <View className="flex-1">
-      <Text className="text-xl my-4 font-bold">Drugs to be taken today:</Text>
+    <View className="flex-1 relative">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-xl my-4 font-bold">Drugs to be taken</Text>
+        {/* @ts-ignore */}
+        <TouchableOpacity onPress={() => navigation.navigate("schedule")}>
+          <Text className="text-right font-semibold py-2 text-orange-500">
+            View Schedule
+          </Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
+        ListEmptyComponent={() => (
+          <View>
+            <Text className="text-center bg-red-50 py-2">
+              No drugs to be taken at the moment
+            </Text>
+          </View>
+        )}
         data={getDrugsForToday()}
         ItemSeparatorComponent={() => <View className="h-4"></View>}
         renderItem={renderItem}

@@ -12,6 +12,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { DrugProvider } from "@/store/drugStore";
+import { UserProvider } from "@/store/userStore";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -54,13 +55,17 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <DrugProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-        </Stack>
-      </ThemeProvider>
-    </DrugProvider>
+    <UserProvider>
+      <DrugProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          </Stack>
+        </ThemeProvider>
+      </DrugProvider>
+    </UserProvider>
   );
 }
