@@ -46,7 +46,9 @@ const ReviewList = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white p-4">
-      <Text className="text-xl my-4 font-bold">Your medications</Text>
+      <Text className="text-xl my-4 font-bold text-center">
+        Your medications
+      </Text>
       <FlatList
         data={drugs}
         ItemSeparatorComponent={() => <View className="h-4"></View>}

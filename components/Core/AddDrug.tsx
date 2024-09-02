@@ -202,6 +202,34 @@ export default function App() {
     alert("Drug added successfully");
   };
 
+  const [activeReminderIndex, setActiveReminderIndex] = useState<number | null>(
+    null
+  );
+
+  const handleDateChange = (
+    event: any,
+    selectedDate: Date | undefined,
+    index: number
+  ) => {
+    if (selectedDate) {
+      const currentDate = selectedDate;
+      setFormData((prev) => ({
+        ...prev,
+        reminders: prev.reminders.map((r, i) =>
+          i === index
+            ? {
+                ...r,
+                hours: currentDate.getHours(),
+                minutes: currentDate.getMinutes(),
+              }
+            : r
+        ),
+      }));
+    }
+    setShow(false);
+    setActiveReminderIndex(null);
+  };
+
   return (
     <View className="space-y-6 relative flex-1">
       <TouchableOpacity
@@ -245,36 +273,19 @@ export default function App() {
           <View>
             {formData.reminders.map((reminder, index) => (
               <View
-                key={index}
                 className="flex-row justify-between my-3 items-center"
+                key={index}
               >
-                {show && (
+                {activeReminderIndex === index && (
                   <RNDateTimePicker
                     value={new Date()}
                     mode="time"
-                    key={index}
-                    display="default"
-                    onChange={(_, selectedDate) => {
-                      if (selectedDate) {
-                        const currentDate = selectedDate;
-                        setFormData((prev) => ({
-                          ...prev,
-                          reminders: prev.reminders.map((r, i) =>
-                            i === index
-                              ? {
-                                  ...r,
-                                  hours: currentDate.getHours(),
-                                  minutes: currentDate.getMinutes(),
-                                }
-                              : r
-                          ),
-                        }));
-                      }
-                      setShow(false);
-                    }}
+                    onChange={(event, selectedDate) =>
+                      handleDateChange(event, selectedDate, index)
+                    }
                   />
                 )}
-                <TouchableOpacity onPress={() => setShow(true)}>
+                <TouchableOpacity onPress={() => setActiveReminderIndex(index)}>
                   <Text className="text-base">
                     {`${reminder.hours
                       .toString()
