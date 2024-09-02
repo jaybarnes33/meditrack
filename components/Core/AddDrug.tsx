@@ -211,7 +211,7 @@ export default function App() {
     selectedDate: Date | undefined,
     index: number
   ) => {
-    if (selectedDate) {
+    if (event.type === "set" && selectedDate) {
       const currentDate = selectedDate;
       setFormData((prev) => ({
         ...prev,
@@ -276,16 +276,22 @@ export default function App() {
                 className="flex-row justify-between my-3 items-center"
                 key={index}
               >
-                {activeReminderIndex === index && (
+                {show && activeReminderIndex === index && (
                   <RNDateTimePicker
-                    value={new Date()}
+                    value={new Date(0, 0, 0, reminder.hours, reminder.minutes)}
                     mode="time"
+                    display="default"
                     onChange={(event, selectedDate) =>
                       handleDateChange(event, selectedDate, index)
                     }
                   />
                 )}
-                <TouchableOpacity onPress={() => setActiveReminderIndex(index)}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShow(true);
+                    setActiveReminderIndex(index);
+                  }}
+                >
                   <Text className="text-base">
                     {`${reminder.hours
                       .toString()
